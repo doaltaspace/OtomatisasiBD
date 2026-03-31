@@ -1,4 +1,167 @@
 
+// =====================
+// Floating Particles Background
+// =====================
+const Particles = (() => {
+  let canvas, ctx, particles = [], raf;
+  const COUNT = 35;
+
+  function init() {
+    canvas = document.getElementById('particles-canvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    resize();
+    window.addEventListener('resize', resize);
+    for (let i = 0; i < COUNT; i++) particles.push(createParticle());
+    loop();
+  }
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function createParticle() {
+    const shapes = ['circle', 'square', 'triangle'];
+    const colors = ['#bae6fd', '#c4b5fd', '#a7f3d0', '#fde68a', '#fca5a5', '#7dd3fc'];
+    return {
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: 3 + Math.random() * 6,
+      speedX: (Math.random() - 0.5) * 0.3,
+      speedY: -0.15 - Math.random() * 0.25,
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.01,
+      opacity: 0.12 + Math.random() * 0.18,
+      shape: shapes[Math.floor(Math.random() * shapes.length)],
+      color: colors[Math.floor(Math.random() * colors.length)],
+    };
+  }
+
+  function draw(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation);
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = p.color;
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 0.8;
+
+    if (p.shape === 'circle') {
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    } else if (p.shape === 'square') {
+      const s = p.size;
+      ctx.beginPath();
+      ctx.roundRect(-s, -s, s * 2, s * 2, 2);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      const s = p.size;
+      ctx.beginPath();
+      ctx.moveTo(0, -s);
+      ctx.lineTo(s, s);
+      ctx.lineTo(-s, s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.speedX;
+      p.y += p.speedY;
+      p.rotation += p.rotSpeed;
+      if (p.y < -20) { p.y = canvas.height + 20; p.x = Math.random() * canvas.width; }
+      if (p.x < -20) p.x = canvas.width + 20;
+      if (p.x > canvas.width + 20) p.x = -20;
+      draw(p);
+    });
+    raf = requestAnimationFrame(loop);
+  }
+
+  return { init };
+})();
+
+// =====================
+// Confetti Effect
+// =====================
+const Confetti = (() => {
+  let canvas, ctx, pieces = [], raf, running = false;
+
+  function init() {
+    canvas = document.getElementById('confetti-canvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    resize();
+    window.addEventListener('resize', resize);
+  }
+
+  function resize() {
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function burst(count = 80) {
+    pieces = [];
+    const colors = ['#1e293b', '#0ea5e9', '#22c55e', '#eab308', '#f97316', '#8b5cf6', '#ec4899'];
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight * 0.35;
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 4 + Math.random() * 8;
+      pieces.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 4,
+        size: 4 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.2,
+        life: 1,
+        decay: 0.008 + Math.random() * 0.008,
+        shape: Math.random() > 0.5 ? 'rect' : 'circle',
+      });
+    }
+    if (!running) { running = true; loop(); }
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces = pieces.filter(p => p.life > 0);
+    if (pieces.length === 0) { running = false; return; }
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.18; // gravity
+      p.rotation += p.rotSpeed;
+      p.life -= p.decay;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    });
+    raf = requestAnimationFrame(loop);
+  }
+
+  return { init, burst };
+})();
+
 const SFX = (() => {
   let ctx = null;
 
@@ -41,27 +204,16 @@ const SFX = (() => {
   }
 
   return {
-    // File uploaded / dropped
     upload() { sequence([[523, "sine", 0.1], [659, "sine", 0.1], [784, "sine", 0.15]]); },
-    // File removed
     remove() { play(330, "triangle", 0.12, 0.2); },
-    // Step navigation click
     step() { play(600, "sine", 0.08, 0.15); },
-    // Processing started
     processStart() { sequence([[440, "sine", 0.08], [550, "sine", 0.08], [660, "sine", 0.12]]); },
-    // Each file tick during processing
     tick() { play(880, "sine", 0.05, 0.12); },
-    // Processing complete (success)
     success() { sequence([[523, "sine", 0.1], [659, "sine", 0.1], [784, "sine", 0.12], [1047, "sine", 0.2]]); },
-    // Error
     error() { sequence([[300, "square", 0.15], [200, "square", 0.25]], 0.15); },
-    // Warning
     warning() { sequence([[400, "triangle", 0.12], [350, "triangle", 0.15]], 0.15); },
-    // Copy to clipboard
     copy() { sequence([[700, "sine", 0.06], [900, "sine", 0.08]], 0.18); },
-    // Download excel
     download() { sequence([[440, "sine", 0.08], [554, "sine", 0.08], [659, "sine", 0.1], [880, "sine", 0.15]]); },
-    // Toast info
     info() { play(700, "sine", 0.1, 0.12); },
   };
 })();
@@ -211,10 +363,10 @@ function convertMonthToIndonesian(dateStr) {
 function showToast(message, type = "info", duration = 4000) {
   const container = document.getElementById("toast-container");
   const colors = {
-    success: "bg-green-300 border-slate-800",
-    error:   "bg-rose-300 border-slate-800",
-    info:    "bg-sky-200 border-slate-800",
-    warning: "bg-amber-300 border-slate-800",
+    success: "bg-green-300/95 border-slate-800",
+    error:   "bg-rose-300/95 border-slate-800",
+    info:    "bg-sky-200/95 border-slate-800",
+    warning: "bg-amber-300/95 border-slate-800",
   };
   const icons = {
     success: "check-circle",
@@ -224,8 +376,9 @@ function showToast(message, type = "info", duration = 4000) {
   };
 
   const toast = document.createElement("div");
-  toast.className = `toast flex items-center gap-3 px-5 py-3 rounded-xl border-4 ${colors[type]} shadow-[4px_4px_0px_0px_#1e293b] font-bold text-sm text-slate-800 max-w-sm`;
-  toast.innerHTML = `<i data-lucide="${icons[type]}" class="w-5 h-5 shrink-0 stroke-[3]"></i><span>${message}</span>`;
+  toast.className = `toast relative flex items-center gap-3 px-5 py-3 rounded-xl border-4 ${colors[type]} shadow-[4px_4px_0px_0px_#1e293b] font-bold text-sm text-slate-800 max-w-sm overflow-hidden`;
+  toast.style.setProperty('--toast-duration', duration + 'ms');
+  toast.innerHTML = `<i data-lucide="${icons[type]}" class="w-5 h-5 shrink-0 stroke-[3]"></i><span>${message}</span><div class="toast-progress"></div>`;
   container.appendChild(toast);
   lucide.createIcons({ nodes: [toast] });
 
@@ -240,22 +393,32 @@ function showToast(message, type = "info", duration = 4000) {
 // =====================
 function renderStepIndicator() {
   const indicator = document.getElementById("step-indicator");
-  indicator.innerHTML = `
-    <div class="flex items-center">
-      <div class="w-12 h-12 rounded-full flex items-center justify-center border-4 border-slate-800 font-bold text-lg transition-all ${step >= 1 ? "bg-sky-300 text-slate-800 shadow-[3px_3px_0px_0px_#1e293b]" : "bg-white text-slate-400"}">1</div>
-      <span class="ml-3 font-bold text-slate-800 hidden sm:block">Unggah PDF</span>
-    </div>
-    <div class="w-10 sm:w-16 h-2 bg-slate-800 mx-4 sm:mx-6 rounded-full opacity-10"></div>
-    <div class="flex items-center">
-      <div class="w-12 h-12 rounded-full flex items-center justify-center border-4 border-slate-800 font-bold text-lg transition-all ${step >= 2 ? "bg-amber-300 text-slate-800 shadow-[3px_3px_0px_0px_#1e293b]" : "bg-white text-slate-400"}">2</div>
-      <span class="ml-3 font-bold text-slate-800 hidden sm:block">Proses</span>
-    </div>
-    <div class="w-10 sm:w-16 h-2 bg-slate-800 mx-4 sm:mx-6 rounded-full opacity-10"></div>
-    <div class="flex items-center">
-      <div class="w-12 h-12 rounded-full flex items-center justify-center border-4 border-slate-800 font-bold text-lg transition-all ${step >= 3 ? "bg-green-300 text-slate-800 shadow-[3px_3px_0px_0px_#1e293b]" : "bg-white text-slate-400"}">3</div>
-      <span class="ml-3 font-bold text-slate-800 hidden sm:block">Hasil & Unduh</span>
-    </div>
-  `;
+  const steps = [
+    { num: 1, label: "Unggah PDF", color: "bg-sky-300", icon: `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="none"><path d="M10 14V4" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><path d="M6 8l4-4 4 4" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/></svg>` },
+    { num: 2, label: "Proses", color: "bg-amber-300", icon: `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="#1e293b" stroke-width="2"/><path d="M10 1v2M10 17v2M1 10h2M17 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4" stroke="#1e293b" stroke-width="1.8" stroke-linecap="round"/></svg>` },
+    { num: 3, label: "Hasil & Unduh", color: "bg-green-300", icon: `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="none"><path d="M6 10l3 3 5-6" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="8" stroke="#1e293b" stroke-width="2"/></svg>` },
+  ];
+
+  let html = '<div class="flex items-center">';
+  steps.forEach((s, i) => {
+    const isActive = step >= s.num;
+    const isCurrent = step === s.num;
+    html += `
+      <div class="flex items-center">
+        <div class="step-dot ${isCurrent ? 'active' : ''} w-12 h-12 rounded-full flex items-center justify-center border-4 border-slate-800 font-bold text-lg
+          ${isActive ? s.color + ' text-slate-800 shadow-[3px_3px_0px_0px_#1e293b]' : 'bg-white/80 text-slate-400'}">
+          ${isActive ? s.icon : s.num}
+        </div>
+        <span class="ml-3 font-bold ${isActive ? 'text-slate-800' : 'text-slate-400'} hidden sm:block transition-colors duration-300">${s.label}</span>
+      </div>
+    `;
+    if (i < steps.length - 1) {
+      const filled = step > s.num;
+      html += `<div class="step-connector ${filled ? 'filled' : ''} w-10 sm:w-16 h-2 bg-slate-200 mx-4 sm:mx-6 rounded-full border-2 border-slate-800/10"></div>`;
+    }
+  });
+  html += '</div>';
+  indicator.innerHTML = html;
 }
 
 // =====================
@@ -341,23 +504,27 @@ function initDropZone() {
 // File List (Step 2)
 // =====================
 function renderFileList() {
-  document.getElementById("file-count").innerText = `${selectedFiles.length} File`;
+  const countEl = document.getElementById("file-count");
+  countEl.innerText = `${selectedFiles.length} File`;
+  countEl.classList.add('pulse');
+  setTimeout(() => countEl.classList.remove('pulse'), 400);
+
   const list = document.getElementById("file-list");
   list.innerHTML = selectedFiles
     .map((file, idx) => {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
       return `
-      <div class="flex items-center justify-between p-4 bg-white border-4 border-slate-800 rounded-2xl shadow-[4px_4px_0px_0px_#1e293b]">
+      <div class="file-item flex items-center justify-between p-4 bg-white/80 backdrop-blur-sm border-4 border-slate-800 rounded-2xl shadow-[4px_4px_0px_0px_#1e293b]" style="animation-delay: ${idx * 60}ms">
         <div class="flex items-center overflow-hidden">
           <div class="w-10 h-10 bg-sky-200 border-2 border-slate-800 rounded-full flex items-center justify-center mr-3 shrink-0">
-            <i data-lucide="file-text" class="w-5 h-5 text-slate-800"></i>
+            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="10" height="14" rx="2" stroke="#1e293b" stroke-width="2" fill="#e0f2fe"/><path d="M13 2v4h4" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/><rect x="3" y="2" width="14" height="16" rx="2" stroke="#1e293b" stroke-width="2" fill="none"/><path d="M7 10h6M7 13h4" stroke="#1e293b" stroke-width="1.5" stroke-linecap="round"/></svg>
           </div>
           <div class="overflow-hidden">
             <p class="text-sm font-bold text-slate-800 truncate">${file.name}</p>
             <p class="text-xs font-bold text-slate-500 mt-1">${sizeMB} MB</p>
           </div>
         </div>
-        <button onclick="removeFile(${idx})" class="w-8 h-8 bg-white border-2 border-slate-800 rounded-lg flex items-center justify-center text-slate-800 hover:bg-rose-300 transition-colors ml-2 shrink-0">
+        <button onclick="removeFile(${idx})" class="file-remove-btn w-8 h-8 bg-white border-2 border-slate-800 rounded-lg flex items-center justify-center text-slate-800 ml-2 shrink-0">
           <i data-lucide="x" class="w-4 h-4 stroke-[3]"></i>
         </button>
       </div>
@@ -387,10 +554,12 @@ async function processFiles() {
   const statusDiv = document.getElementById("processing-status");
   const statusText = document.getElementById("processing-text");
   const statusDetail = document.getElementById("processing-detail");
+  const progressBar = document.getElementById("processing-bar");
 
   btnProcess.disabled = true;
   btnProcess.classList.add("opacity-50", "cursor-not-allowed");
   statusDiv.classList.remove("hidden");
+  if (progressBar) progressBar.style.width = "0%";
   SFX.processStart();
 
   extractedResults = [];
@@ -410,6 +579,7 @@ async function processFiles() {
   for (let i = 0; i < total; i++) {
     statusText.innerText = `Memproses: ${selectedFiles[i].name}`;
     statusDetail.innerText = `${i} dari ${total} selesai`;
+    if (progressBar) progressBar.style.width = `${((i) / total) * 100}%`;
 
     try {
       const text = await extractTextFromPdf(selectedFiles[i]);
@@ -425,7 +595,6 @@ async function processFiles() {
       const data = extractDataFromText(text);
       SFX.tick();
 
-      // Check if at least one field was extracted
       const hasData = Object.values(data).some((v) => v !== "");
       if (!hasData) {
         extractedResults.push({
@@ -447,7 +616,12 @@ async function processFiles() {
     }
   }
 
+  if (progressBar) progressBar.style.width = "100%";
   statusDetail.innerText = `${total} dari ${total} selesai`;
+
+  // Short delay so the user sees 100%
+  await new Promise(r => setTimeout(r, 400));
+
   statusDiv.classList.add("hidden");
   btnProcess.disabled = false;
   btnProcess.classList.remove("opacity-50", "cursor-not-allowed");
@@ -455,6 +629,7 @@ async function processFiles() {
   const successCount = extractedResults.filter((r) => r.data && !r.error).length;
   if (successCount > 0) {
     SFX.success();
+    Confetti.burst(100);
     showToast(`${successCount} dari ${total} dokumen berhasil diproses`, "success");
   } else {
     SFX.error();
@@ -555,12 +730,14 @@ function copyToClipboard() {
   });
 
   const text = lines.join("\n");
+  const btn = document.getElementById("btn-copy");
 
   navigator.clipboard.writeText(text).then(() => {
     SFX.copy();
+    btn.classList.add("success-flash");
+    setTimeout(() => btn.classList.remove("success-flash"), 500);
     showToast("Data berhasil di-copy! Silakan paste di Excel.", "success");
   }).catch(() => {
-    // Fallback for older browsers
     const ta = document.createElement("textarea");
     ta.value = text;
     ta.style.position = "fixed";
@@ -570,6 +747,8 @@ function copyToClipboard() {
     document.execCommand("copy");
     document.body.removeChild(ta);
     SFX.copy();
+    btn.classList.add("success-flash");
+    setTimeout(() => btn.classList.remove("success-flash"), 500);
     showToast("Data berhasil di-copy! Silakan paste di Excel.", "success");
   });
 }
@@ -618,14 +797,50 @@ function downloadExcel() {
   const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
   XLSX.writeFile(wb, `Data_BD_${dateStr}.xlsx`);
   SFX.download();
+  const btn = document.getElementById("btn-download");
+  btn.classList.add("success-flash");
+  setTimeout(() => btn.classList.remove("success-flash"), 500);
   showToast("File Excel berhasil diunduh!", "success");
 }
 
 // =====================
 // Init
 // =====================
+// =====================
+// Interactive Button Ripple & Bounce
+// =====================
+function initButtonEffects() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-neo');
+    if (!btn) return;
+
+    // Create ripple from click position
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
+    const ripple = document.createElement('span');
+    ripple.className = 'btn-ripple';
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+
+    // Bounce-back after press
+    btn.classList.remove('btn-bounce');
+    void btn.offsetWidth; // force reflow
+    btn.classList.add('btn-bounce');
+    btn.addEventListener('animationend', function handler() {
+      btn.classList.remove('btn-bounce');
+      btn.removeEventListener('animationend', handler);
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  Particles.init();
+  Confetti.init();
   renderStepIndicator();
   initDropZone();
+  initButtonEffects();
   lucide.createIcons();
 });

@@ -10,25 +10,97 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
-<body class="bg-slate-50 font-sans min-h-screen py-12 px-4 sm:px-6">
+<body class="font-sans min-h-screen py-12 px-4 sm:px-6 relative overflow-x-hidden">
+
+  <!-- SVG Background -->
+  <div class="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
+    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <!-- Soft gradient base -->
+        <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f0f9ff"/>
+          <stop offset="35%" stop-color="#e0f2fe"/>
+          <stop offset="65%" stop-color="#f5f3ff"/>
+          <stop offset="100%" stop-color="#ecfdf5"/>
+        </linearGradient>
+        <!-- Dot pattern -->
+        <pattern id="dot-grid" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1.2" fill="#94a3b8" opacity="0.18"/>
+        </pattern>
+        <!-- Wavy line pattern -->
+        <pattern id="wave-lines" x="0" y="0" width="120" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(-4)">
+          <path d="M0 10 Q30 0 60 10 Q90 20 120 10" stroke="#7dd3fc" stroke-width="1.5" fill="none" opacity="0.18"/>
+        </pattern>
+      </defs>
+      <!-- Base fill -->
+      <rect width="100%" height="100%" fill="url(#bg-grad)"/>
+      <!-- Dot grid -->
+      <rect width="100%" height="100%" fill="url(#dot-grid)"/>
+      <!-- Wave lines -->
+      <rect width="100%" height="100%" fill="url(#wave-lines)"/>
+      <!-- Large decorative blobs -->
+      <circle cx="10%" cy="18%" r="180" fill="#bae6fd" opacity="0.22">
+        <animate attributeName="cy" values="18%;22%;18%" dur="18s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="85%" cy="72%" r="140" fill="#c4b5fd" opacity="0.16">
+        <animate attributeName="cx" values="85%;80%;85%" dur="22s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="55%" cy="88%" r="200" fill="#a7f3d0" opacity="0.13">
+        <animate attributeName="r" values="200;220;200" dur="15s" repeatCount="indefinite"/>
+      </circle>
+      <!-- Geometric accents -->
+      <rect x="6%" y="55%" width="50" height="50" rx="12" fill="#fde68a" opacity="0.2" transform="rotate(15, 80, 400)">
+        <animateTransform attributeName="transform" type="rotate" values="15,80,400;25,80,400;15,80,400" dur="20s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="78%" y="15%" width="35" height="35" rx="8" fill="#fca5a5" opacity="0.18" transform="rotate(-10, 900, 120)">
+        <animateTransform attributeName="transform" type="rotate" values="-10,900,120;5,900,120;-10,900,120" dur="16s" repeatCount="indefinite"/>
+      </rect>
+      <polygon points="200,65 220,30 240,65" fill="#7dd3fc" opacity="0.15">
+        <animate attributeName="opacity" values="0.15;0.25;0.15" dur="10s" repeatCount="indefinite"/>
+      </polygon>
+      <polygon points="920,520 950,480 980,520" fill="#c4b5fd" opacity="0.13">
+        <animate attributeName="opacity" values="0.13;0.22;0.13" dur="12s" repeatCount="indefinite"/>
+      </polygon>
+      <!-- Cross accents -->
+      <g opacity="0.12" transform="translate(150, 350)">
+        <line x1="-12" y1="0" x2="12" y2="0" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+        <line x1="0" y1="-12" x2="0" y2="12" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+        <animateTransform attributeName="transform" type="rotate" values="0,150,350;360,150,350" dur="40s" repeatCount="indefinite"/>
+      </g>
+      <g opacity="0.10" transform="translate(850, 250)">
+        <line x1="-10" y1="0" x2="10" y2="0" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="-10" x2="0" y2="10" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+        <animateTransform attributeName="transform" type="rotate" values="0,850,250;-360,850,250" dur="35s" repeatCount="indefinite"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Floating particles canvas -->
+  <canvas id="particles-canvas" class="fixed inset-0 -z-[5] pointer-events-none" aria-hidden="true"></canvas>
 
   <!-- Header -->
-  <div class="max-w-7xl mx-auto mb-10 text-center">
-    <div class="inline-block bg-white border-4 border-slate-800 rounded-2xl px-6 py-3 shadow-[6px_6px_0px_0px_#1e293b] mb-4 transform -rotate-1">
+  <div class="max-w-7xl mx-auto mb-10 flex flex-col items-center animate-on-enter" data-anim="fadeSlideDown">
+    <div class="bg-white/80 backdrop-blur-sm border-4 border-slate-800 rounded-2xl px-6 py-3 shadow-[6px_6px_0px_0px_#1e293b] header-float cursor-default group hover:shadow-[8px_8px_0px_0px_#1e293b] transition-shadow duration-300">
       <h1 class="text-3xl font-bold text-slate-800 tracking-tight flex items-center">
-        <i data-lucide="file-search" class="w-8 h-8 mr-3 text-sky-500"></i>
+        <!-- Custom SVG icon instead of lucide -->
+        <svg class="w-9 h-9 mr-3 header-icon-alive" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="6" width="24" height="30" rx="3" stroke="#1e293b" stroke-width="3" fill="#bae6fd"/>
+          <rect x="12" y="2" width="24" height="30" rx="3" stroke="#1e293b" stroke-width="3" fill="#e0f2fe"/>
+          <path d="M18 12h12M18 18h8M18 24h10" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="30" cy="28" r="8" fill="#fde68a" stroke="#1e293b" stroke-width="2.5"/>
+          <path d="M33 31l4 4" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
         Otomatisasi Data BD
       </h1>
     </div>
-    <div class="mb-6 transform rotate-1">
-      <span class="bg-sky-200 text-slate-800 px-4 py-1.5 rounded-full text-sm font-bold border-2 border-slate-800 shadow-[2px_2px_0px_0px_#1e293b]">
+    <div class="mt-3 badge-float">
+      <span class="bg-sky-200/90 backdrop-blur-sm text-slate-800 px-4 py-1.5 rounded-full text-sm font-bold border-2 border-slate-800 shadow-[2px_2px_0px_0px_#1e293b] hover:shadow-[3px_3px_0px_0px_#1e293b] transition-shadow duration-200">
         by Lusy Oktaviasari
       </span>
     </div>
-    <p class="text-lg font-bold text-slate-600 max-w-2xl mx-auto">
+    <p class="text-lg font-bold text-slate-600 max-w-2xl mx-auto mt-6">
       Ekstrak data dari PDF Bukti Distribusi secara otomatis dan unduh langsung ke format Excel.
     </p>
-
   </div>
 
   <!-- Step Indicator -->
@@ -37,10 +109,15 @@
   <div class="transition-all duration-300 ease-in-out pb-12">
 
     <!-- Step 1: Upload PDF -->
-    <div id="step-1-container" class="block max-w-3xl mx-auto bg-white p-10 rounded-3xl border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1e293b]">
+    <div id="step-1-container" class="block max-w-3xl mx-auto bg-white/80 backdrop-blur-sm p-10 rounded-3xl border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1e293b] card-hover">
       <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-sky-200 border-4 border-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[4px_4px_0px_0px_#1e293b] transform -rotate-3">
-          <i data-lucide="upload" class="w-8 h-8 text-slate-800"></i>
+        <div class="w-16 h-16 bg-sky-200 border-4 border-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[4px_4px_0px_0px_#1e293b] transform -rotate-3 icon-float">
+          <!-- Custom SVG upload icon -->
+          <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 22V6" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+            <path d="M10 12l6-6 6 6" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 22v4a2 2 0 002 2h20a2 2 0 002-2v-4" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+          </svg>
         </div>
         <h2 class="text-3xl font-bold text-slate-800 mb-2">Unggah Dokumen BD</h2>
         <p class="text-slate-600 font-medium">Pilih satu atau beberapa file PDF Bukti Distribusi Barang.</p>
@@ -48,13 +125,18 @@
 
       <div
         id="drop-zone"
-        class="border-4 border-dashed border-slate-800 bg-sky-50 rounded-3xl p-12 text-center cursor-pointer hover:bg-sky-100 transition-colors"
+        class="drop-zone border-4 border-dashed border-slate-800 bg-sky-50/70 rounded-3xl p-12 text-center cursor-pointer transition-all duration-300"
         onclick="document.getElementById('file-input').click()"
       >
-        <i data-lucide="upload-cloud" class="w-12 h-12 text-slate-800 mx-auto mb-4"></i>
+        <!-- Custom SVG cloud upload -->
+        <svg class="w-16 h-16 mx-auto mb-4 drop-zone-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 48h24a14 14 0 002-27.8 18 18 0 00-35.4 6A12 12 0 0020 48z" fill="#e0f2fe" stroke="#1e293b" stroke-width="3"/>
+          <path d="M32 52V34" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+          <path d="M26 40l6-6 6 6" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         <p class="text-xl font-bold text-slate-800 mb-2">Jatuhkan file PDF di sini</p>
         <p class="text-sm font-bold text-slate-500 mb-8">Format PDF, maksimal 50MB per file</p>
-        <button class="bg-white text-slate-800 border-4 border-slate-800 px-8 py-3 rounded-xl font-bold text-base hover:translate-y-1 hover:translate-x-1 hover:shadow-none shadow-[4px_4px_0px_0px_#1e293b] transition-all pointer-events-none">
+        <button class="btn-neo bg-white text-slate-800 border-4 border-slate-800 px-8 py-3 rounded-xl font-bold text-base shadow-[4px_4px_0px_0px_#1e293b] transition-all pointer-events-none">
           Cari di Komputer
         </button>
         <input type="file" id="file-input" accept=".pdf" multiple class="hidden" />
@@ -62,43 +144,56 @@
     </div>
 
     <!-- Step 2: File List & Process -->
-    <div id="step-2-container" class="hidden max-w-4xl mx-auto bg-white p-8 rounded-3xl border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1e293b]">
+    <div id="step-2-container" class="hidden max-w-4xl mx-auto bg-white/80 backdrop-blur-sm p-8 rounded-3xl border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1e293b] card-hover">
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold text-slate-800">Antrean Dokumen</h2>
-        <span id="file-count" class="bg-sky-100 text-slate-800 text-sm px-3 py-1 rounded-lg font-bold border-2 border-slate-800 shadow-[2px_2px_0px_0px_#1e293b]">0 File</span>
+        <span id="file-count" class="bg-sky-100 text-slate-800 text-sm px-3 py-1 rounded-lg font-bold border-2 border-slate-800 shadow-[2px_2px_0px_0px_#1e293b] counter-badge">0 File</span>
       </div>
 
       <div id="file-list" class="space-y-3 mb-8"></div>
 
       <!-- Processing status -->
       <div id="processing-status" class="hidden mb-8">
-        <div class="bg-amber-50 border-4 border-slate-800 rounded-2xl p-6 text-center">
-          <div class="animate-spin w-10 h-10 border-4 border-slate-800 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <div class="bg-amber-50/80 backdrop-blur-sm border-4 border-slate-800 rounded-2xl p-6 text-center">
+          <!-- Custom SVG spinner -->
+          <svg class="w-12 h-12 mx-auto mb-4 processing-spinner" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="20" stroke="#e2e8f0" stroke-width="4"/>
+            <path d="M24 4a20 20 0 0118 11" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
+          </svg>
           <p id="processing-text" class="text-lg font-bold text-slate-800">Memproses dokumen...</p>
           <p id="processing-detail" class="text-sm font-bold text-slate-500 mt-1">0 dari 0 selesai</p>
+          <!-- Progress bar -->
+          <div class="mt-4 w-full h-3 bg-slate-200 rounded-full border-2 border-slate-800 overflow-hidden">
+            <div id="processing-bar" class="h-full bg-amber-400 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+          </div>
         </div>
       </div>
 
       <div class="flex flex-col sm:flex-row justify-between items-center pt-6 border-t-4 border-slate-800 gap-4">
         <button
           onclick="resetToUpload()"
-          class="w-full sm:w-auto px-6 py-3 bg-white border-4 border-slate-800 rounded-xl font-bold text-slate-800 shadow-[4px_4px_0px_0px_#1e293b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all"
+          class="btn-neo w-full sm:w-auto px-6 py-3 bg-white border-4 border-slate-800 rounded-xl font-bold text-slate-800 shadow-[4px_4px_0px_0px_#1e293b] transition-all"
         >
           <i data-lucide="arrow-left" class="w-4 h-4 mr-2 inline stroke-[3]"></i> Kembali
         </button>
         <button
           id="btn-process"
           onclick="processFiles()"
-          class="w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-base border-4 border-slate-800 transition-all flex items-center justify-center bg-green-400 text-slate-800 shadow-[4px_4px_0px_0px_#1e293b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none"
+          class="btn-neo w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-base border-4 border-slate-800 transition-all flex items-center justify-center bg-green-400 text-slate-800 shadow-[4px_4px_0px_0px_#1e293b]"
         >
-          <i data-lucide="cpu" class="w-5 h-5 mr-2 stroke-[3]"></i> Proses Ekstraksi
+          <!-- Custom SVG gear -->
+          <svg class="w-5 h-5 mr-2 btn-icon-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#1e293b" stroke-width="2.5"/>
+            <path d="M10.3 1.8l-.5 2.1a8 8 0 00-2.2 1.3L5.6 4.5 3.8 7.6l1.6 1.5a8 8 0 000 2.6l-1.6 1.5 1.8 3.1 2-.7a8 8 0 002.2 1.3l.5 2.1h3.4l.5-2.1a8 8 0 002.2-1.3l2 .7 1.8-3.1-1.6-1.5a8 8 0 000-2.6l1.6-1.5-1.8-3.1-2 .7a8 8 0 00-2.2-1.3l-.5-2.1z" stroke="#1e293b" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          Proses Ekstraksi
         </button>
       </div>
     </div>
 
     <!-- Step 3: Results Table -->
-    <div id="step-3-container" class="hidden max-w-6xl mx-auto bg-white rounded-3xl border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1e293b] overflow-hidden">
-      <div class="p-8 border-b-4 border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-sky-100 gap-6">
+    <div id="step-3-container" class="hidden max-w-6xl mx-auto bg-white/80 backdrop-blur-sm rounded-3xl border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1e293b] overflow-hidden card-hover">
+      <div class="p-8 border-b-4 border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-sky-100/80 backdrop-blur-sm gap-6">
         <div>
           <h2 class="text-2xl font-bold text-slate-800 mb-2">Hasil Ekstraksi Data BD</h2>
           <p class="text-base font-medium text-slate-700">Periksa hasil ekstraksi sebelum mengunduh ke Excel.</p>
@@ -107,22 +202,22 @@
           <button
             id="btn-copy"
             onclick="copyToClipboard()"
-            class="bg-sky-300 text-slate-800 px-6 py-3 rounded-xl font-bold text-base border-4 border-slate-800 shadow-[4px_4px_0px_0px_#1e293b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all flex items-center justify-center flex-1 sm:flex-none"
+            class="btn-neo bg-sky-300 text-slate-800 px-6 py-3 rounded-xl font-bold text-base border-4 border-slate-800 shadow-[4px_4px_0px_0px_#1e293b] transition-all flex items-center justify-center flex-1 sm:flex-none"
           >
             <i data-lucide="clipboard-copy" class="w-5 h-5 mr-2 stroke-[3]"></i> Copy
           </button>
           <button
             id="btn-download"
             onclick="downloadExcel()"
-            class="bg-green-400 text-slate-800 px-6 py-3 rounded-xl font-bold text-base border-4 border-slate-800 shadow-[4px_4px_0px_0px_#1e293b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all flex items-center justify-center flex-1 sm:flex-none"
+            class="btn-neo bg-green-400 text-slate-800 px-6 py-3 rounded-xl font-bold text-base border-4 border-slate-800 shadow-[4px_4px_0px_0px_#1e293b] transition-all flex items-center justify-center flex-1 sm:flex-none"
           >
             <i data-lucide="download" class="w-5 h-5 mr-2 stroke-[3]"></i> Unduh .XLSX
           </button>
         </div>
       </div>
 
-      <div class="bg-slate-50 p-6">
-        <div class="table-scroll-wrapper border-4 border-slate-800 rounded-2xl bg-white">
+      <div class="bg-slate-50/60 p-6">
+        <div class="table-scroll-wrapper border-4 border-slate-800 rounded-2xl bg-white/90">
           <table class="text-left border-collapse w-full" style="min-width: 1100px;">
             <thead>
               <tr id="table-headers" class="bg-green-200 text-slate-800 text-sm font-bold uppercase tracking-wide border-b-4 border-slate-800"></tr>
@@ -132,10 +227,10 @@
         </div>
       </div>
 
-      <div class="p-6 bg-white border-t-4 border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="p-6 bg-white/60 border-t-4 border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
         <button
           onclick="resetToUpload()"
-          class="px-5 py-2.5 bg-white border-4 border-slate-800 rounded-xl font-bold text-sm text-slate-800 shadow-[3px_3px_0px_0px_#1e293b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all"
+          class="btn-neo px-5 py-2.5 bg-white border-4 border-slate-800 rounded-xl font-bold text-sm text-slate-800 shadow-[3px_3px_0px_0px_#1e293b] transition-all"
         >
           <i data-lucide="plus" class="w-4 h-4 mr-1 inline stroke-[3]"></i> Proses Dokumen Baru
         </button>
@@ -147,14 +242,23 @@
 
   </div>
 
+  <!-- Success confetti canvas -->
+  <canvas id="confetti-canvas" class="fixed inset-0 z-[999] pointer-events-none" aria-hidden="true"></canvas>
+
   <!-- Toast Container -->
   <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
 
   <!-- Footer -->
-  <footer class="max-w-7xl mx-auto mt-12 text-center pb-8">
-    <p class="text-sm font-bold text-slate-400">
-      Otomatisasi Data BD &mdash; 100% Client-Side, Tanpa Server
-    </p>
+  <footer class="max-w-7xl mx-auto mt-12 text-center pb-8 relative">
+    <div class="inline-flex items-center gap-2">
+      <svg class="w-4 h-4 opacity-40" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="8" r="7" stroke="#64748b" stroke-width="1.5"/>
+        <path d="M8 4v5l3 2" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <p class="text-sm font-bold text-slate-400">
+        Otomatisasi Data BD &mdash; 100% Client-Side, Tanpa Server
+      </p>
+    </div>
   </footer>
 
   <script src="script.js"></script>

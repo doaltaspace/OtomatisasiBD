@@ -1,5 +1,6 @@
 /* ================================
    Otomatisasi Data BD - Styles
+   Cartoonish, Interactive, Elegant
    ================================ */
 
 body {
@@ -7,32 +8,318 @@ body {
   min-height: 100vh;
 }
 
-/* Smooth step transitions */
+/* ================================
+   Entrance Animations
+   ================================ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Smooth step container transitions */
 #step-1-container,
 #step-2-container,
 #step-3-container {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.animate-on-enter[data-anim="fadeSlideDown"] {
+  animation: fadeSlideDown 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ================================
+   Card & Container Hover
+   ================================ */
+.card-hover {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 8px 9px 0px 0px #1e293b;
+}
+
+/* ================================
+   Neo-Brutalism Button System
+   ================================ */
+.btn-neo {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background-color 0.2s ease,
+              filter 0.2s ease;
+}
+
+.btn-neo:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 5px 6px 0px 0px #1e293b !important;
+  filter: brightness(1.04);
+}
+
+.btn-neo:active {
+  transform: translateY(3px) scale(0.97);
+  box-shadow: 1px 1px 0px 0px #1e293b !important;
+  filter: brightness(0.96);
+  transition-duration: 0.06s;
+}
+
+/* Bounce-back after click */
+.btn-neo.btn-bounce {
+  animation: btnBounceBack 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes btnBounceBack {
+  0%   { transform: translateY(3px) scale(0.97); }
+  40%  { transform: translateY(-4px) scale(1.05); }
+  70%  { transform: translateY(1px) scale(0.99); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Ripple wave from click point */
+.btn-neo .btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(30,41,59,0.18) 0%, rgba(30,41,59,0.04) 60%, transparent 100%);
+  transform: scale(0);
+  animation: btnRippleWave 0.6s cubic-bezier(0, 0.55, 0.45, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes btnRippleWave {
+  0%   { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Gear icon subtle spin on hover */
+.btn-neo:hover .btn-icon-spin {
+  animation: gearSpin 1.5s linear infinite;
+}
+
+@keyframes gearSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ================================
+   Floating Icon Animation
+   ================================ */
+.icon-float {
+  animation: iconFloat 4s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50%      { transform: rotate(-3deg) translateY(-6px); }
+}
+
+/* ================================
+   Header Title Float Animation
+   ================================ */
+.header-float {
+  animation: headerFloat 5s ease-in-out infinite;
+}
+
+@keyframes headerFloat {
+  0%   { transform: rotate(-1deg) translateY(0); }
+  25%  { transform: rotate(0.5deg) translateY(-4px); }
+  50%  { transform: rotate(-0.5deg) translateY(-2px); }
+  75%  { transform: rotate(0.8deg) translateY(-5px); }
+  100% { transform: rotate(-1deg) translateY(0); }
+}
+
+/* ================================
+   Header Icon Continuous Animation
+   ================================ */
+.header-icon-alive {
+  animation: headerIconAlive 3s ease-in-out infinite;
+}
+
+@keyframes headerIconAlive {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  30%      { transform: rotate(-8deg) scale(1.05); }
+  60%      { transform: rotate(6deg) scale(0.97); }
+  80%      { transform: rotate(-3deg) scale(1.02); }
+}
+
+/* ================================
+   Author Badge Float Animation
+   ================================ */
+.badge-float {
+  animation: badgeFloat 4s ease-in-out infinite 0.5s;
+}
+
+@keyframes badgeFloat {
+  0%, 100% { transform: rotate(1deg) translateY(0); }
+  40%      { transform: rotate(-0.8deg) translateY(-3px); }
+  70%      { transform: rotate(0.5deg) translateY(-5px); }
+}
+
+/* ================================
+   Drop Zone
+   ================================ */
+.drop-zone {
+  position: relative;
+  overflow: hidden;
+}
+
+.drop-zone::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(125,211,252,0.15), rgba(196,181,253,0.1));
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.drop-zone:hover::before {
+  opacity: 1;
+}
+
+.drop-zone:hover {
+  background-color: rgba(224,242,254,0.7);
+  border-color: #0284c7;
+}
+
+.drop-zone:hover .drop-zone-icon {
+  animation: cloudBounce 1.2s ease-in-out infinite;
+}
+
+@keyframes cloudBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
 }
 
 /* Drop zone drag-over state */
 #drop-zone.drag-over {
-  background-color: rgb(186 230 253);
+  background-color: rgba(186,230,253,0.8);
   border-color: #0284c7;
-  transform: scale(1.01);
+  transform: scale(1.02);
+  box-shadow: inset 0 0 30px rgba(2,132,199,0.08);
 }
 
-/* Table scroll wrapper: scroll both X and Y */
+#drop-zone.drag-over .drop-zone-icon {
+  animation: cloudBounce 0.6s ease-in-out infinite;
+}
+
+/* ================================
+   File List Items
+   ================================ */
+.file-item {
+  animation: fileItemIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.file-item:hover {
+  transform: translateX(4px);
+  box-shadow: 5px 5px 0px 0px #1e293b;
+}
+
+@keyframes fileItemIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* File remove button */
+.file-remove-btn {
+  transition: all 0.2s;
+}
+
+.file-remove-btn:hover {
+  background-color: #fca5a5;
+  transform: rotate(90deg);
+}
+
+/* ================================
+   Counter Badge Pulse
+   ================================ */
+.counter-badge {
+  transition: transform 0.3s;
+}
+
+.counter-badge.pulse {
+  animation: badgePulse 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes badgePulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* ================================
+   Processing Spinner
+   ================================ */
+.processing-spinner {
+  animation: spinSmooth 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes spinSmooth {
+  to { transform: rotate(360deg); }
+}
+
+/* ================================
+   Step Indicator
+   ================================ */
+.step-dot {
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: default;
+  position: relative;
+}
+
+.step-dot.active {
+  animation: stepActivate 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes stepActivate {
+  0%   { transform: scale(0.8); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Step connector bar fill animation */
+.step-connector {
+  position: relative;
+  overflow: hidden;
+}
+
+.step-connector::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #1e293b;
+  border-radius: inherit;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.step-connector.filled::after {
+  transform: scaleX(1);
+}
+
+/* ================================
+   Table Enhancements
+   ================================ */
 .table-scroll-wrapper {
   overflow-x: auto;
   overflow-y: auto;
@@ -41,14 +328,22 @@ body {
   overscroll-behavior-x: contain;
 }
 
-/* Sticky header when scrolling vertically */
 .table-scroll-wrapper thead tr {
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-/* Scrollbar styling (both axes) */
+/* Row enter animation */
+table tbody tr {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+table tbody tr:hover {
+  background-color: rgba(224,242,254,0.5);
+}
+
+/* Scrollbar styling */
 .table-scroll-wrapper::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -68,18 +363,12 @@ body {
   background: #f1f5f9;
 }
 
-/* Spinner animation */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* Toast notification */
+/* ================================
+   Toast System
+   ================================ */
 .toast {
-  animation: toastIn 0.3s ease-out;
+  animation: toastIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  backdrop-filter: blur(4px);
 }
 
 .toast.toast-out {
@@ -89,33 +378,68 @@ body {
 @keyframes toastIn {
   from {
     opacity: 0;
-    transform: translateX(100%);
+    transform: translateX(40px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
   }
 }
 
 @keyframes toastOut {
   from {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
   }
   to {
     opacity: 0;
-    transform: translateX(100%);
+    transform: translateX(40px) scale(0.9);
   }
 }
 
-/* Table row hover */
-table tbody tr {
-  transition: background-color 0.15s ease;
+/* Toast progress bar */
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: #1e293b;
+  border-radius: 0 0 12px 12px;
+  animation: toastProgress var(--toast-duration, 4s) linear forwards;
 }
 
-/* Responsive adjustments */
+@keyframes toastProgress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+/* ================================
+   Confetti & Success Overlay
+   ================================ */
+.success-flash {
+  animation: successFlash 0.5s ease-out;
+}
+
+@keyframes successFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.5); }
+  100% { box-shadow: 0 0 0 30px rgba(74,222,128,0); }
+}
+
+/* ================================
+   Responsive
+   ================================ */
 @media (max-width: 640px) {
   .overflow-x-auto {
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ================================
+   Reduced Motion
+   ================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
