@@ -280,41 +280,165 @@ body {
 /* ================================
    Step Indicator
    ================================ */
+.step-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
 .step-dot {
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   cursor: default;
   position: relative;
 }
 
-.step-dot.active {
-  animation: stepActivate 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+.step-dot:hover {
+  transform: scale(1.1);
 }
 
-@keyframes stepActivate {
-  0%   { transform: scale(0.8); }
-  50%  { transform: scale(1.15); }
-  100% { transform: scale(1); }
+/* Outer ring pulse for the current active step */
+.step-dot::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  transition: border-color 0.5s, opacity 0.5s;
+  opacity: 0;
+  pointer-events: none;
 }
 
-/* Step connector bar fill animation */
-.step-connector {
-  position: relative;
-  overflow: hidden;
+.step-dot.current::before {
+  border-color: currentColor;
+  opacity: 0.4;
+  animation: stepRingPulse 2s ease-in-out infinite;
 }
 
-.step-connector::after {
+@keyframes stepRingPulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50%      { transform: scale(1.18); opacity: 0.1; }
+}
+
+/* Inner shimmer on current step */
+.step-dot.current::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: #1e293b;
-  border-radius: inherit;
-  transform-origin: left;
-  transform: scaleX(0);
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 60%);
+  animation: stepShimmer 3s ease-in-out infinite;
+  pointer-events: none;
 }
 
-.step-connector.filled::after {
+@keyframes stepShimmer {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 0; }
+}
+
+.step-dot.active {
+  animation: stepActivate 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes stepActivate {
+  0%   { transform: scale(0.7) rotate(-10deg); }
+  50%  { transform: scale(1.15) rotate(3deg); }
+  75%  { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Completed step checkmark entrance */
+.step-dot .step-icon {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+}
+
+.step-dot.completed .step-icon {
+  animation: stepIconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes stepIconPop {
+  0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Step label */
+.step-label {
+  position: absolute;
+  bottom: -28px;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 0.5;
+  transform: translateY(4px);
+}
+
+.step-label.active-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.step-label.current-label {
+  opacity: 1;
+  transform: translateY(0);
+  animation: labelFloat 3s ease-in-out infinite;
+}
+
+@keyframes labelFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+
+/* Step connector bar */
+.step-connector {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s;
+}
+
+.step-connector-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1e293b, #334155);
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.step-connector.filled .step-connector-fill {
   transform: scaleX(1);
+}
+
+/* Shimmer traveling across filled connector */
+.step-connector.filled .step-connector-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: connectorShimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes connectorShimmer {
+  0%   { left: -60%; }
+  100% { left: 160%; }
+}
+
+/* Step number fade in for inactive */
+.step-num {
+  transition: all 0.3s;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ================================

@@ -394,27 +394,47 @@ function showToast(message, type = "info", duration = 4000) {
 function renderStepIndicator() {
   const indicator = document.getElementById("step-indicator");
   const steps = [
-    { num: 1, label: "Unggah PDF", color: "bg-sky-300", icon: `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="none"><path d="M10 14V4" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><path d="M6 8l4-4 4 4" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/></svg>` },
-    { num: 2, label: "Proses", color: "bg-amber-300", icon: `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="#1e293b" stroke-width="2"/><path d="M10 1v2M10 17v2M1 10h2M17 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4" stroke="#1e293b" stroke-width="1.8" stroke-linecap="round"/></svg>` },
-    { num: 3, label: "Hasil & Unduh", color: "bg-green-300", icon: `<svg class="w-5 h-5" viewBox="0 0 20 20" fill="none"><path d="M6 10l3 3 5-6" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="8" stroke="#1e293b" stroke-width="2"/></svg>` },
+    { num: 1, label: "Unggah PDF", color: "bg-sky-300", ringColor: "text-sky-400", icon: `<svg class="w-5 h-5 step-icon" viewBox="0 0 20 20" fill="none"><path d="M10 14V4" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><path d="M6 8l4-4 4 4" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/></svg>` },
+    { num: 2, label: "Proses", color: "bg-amber-300", ringColor: "text-amber-400", icon: `<svg class="w-5 h-5 step-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="#1e293b" stroke-width="2"/><path d="M10 1v2M10 17v2M1 10h2M17 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4" stroke="#1e293b" stroke-width="1.8" stroke-linecap="round"/></svg>` },
+    { num: 3, label: "Hasil & Unduh", color: "bg-green-300", ringColor: "text-green-400", icon: `<svg class="w-5 h-5 step-icon" viewBox="0 0 20 20" fill="none"><path d="M6 10l3 3 5-6" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="8" stroke="#1e293b" stroke-width="2"/></svg>` },
   ];
 
-  let html = '<div class="flex items-center">';
+  let html = '<div class="step-group flex items-center">';
   steps.forEach((s, i) => {
     const isActive = step >= s.num;
     const isCurrent = step === s.num;
+    const isCompleted = step > s.num;
+
+    const dotClasses = [
+      'step-dot',
+      'w-12 h-12 rounded-full flex items-center justify-center border-4 border-slate-800 font-bold text-lg',
+      isActive ? `${s.color} text-slate-800 shadow-[3px_3px_0px_0px_#1e293b]` : 'bg-white/80 text-slate-400',
+      isCurrent ? `current active ${s.ringColor}` : '',
+      isCompleted ? 'completed' : '',
+    ].join(' ');
+
+    const labelClasses = [
+      'step-label',
+      isActive ? 'active-label text-slate-800' : 'text-slate-400',
+      isCurrent ? 'current-label' : '',
+    ].join(' ');
+
     html += `
-      <div class="flex items-center">
-        <div class="step-dot ${isCurrent ? 'active' : ''} w-12 h-12 rounded-full flex items-center justify-center border-4 border-slate-800 font-bold text-lg
-          ${isActive ? s.color + ' text-slate-800 shadow-[3px_3px_0px_0px_#1e293b]' : 'bg-white/80 text-slate-400'}">
-          ${isActive ? s.icon : s.num}
+      <div class="step-item">
+        <div class="${dotClasses}" style="animation-delay: ${i * 0.12}s">
+          ${isActive ? s.icon : `<span class="step-num">${s.num}</span>`}
         </div>
-        <span class="ml-3 font-bold ${isActive ? 'text-slate-800' : 'text-slate-400'} hidden sm:block transition-colors duration-300">${s.label}</span>
+        <span class="${labelClasses}">${s.label}</span>
       </div>
     `;
+
     if (i < steps.length - 1) {
       const filled = step > s.num;
-      html += `<div class="step-connector ${filled ? 'filled' : ''} w-10 sm:w-16 h-2 bg-slate-200 mx-4 sm:mx-6 rounded-full border-2 border-slate-800/10"></div>`;
+      html += `
+        <div class="step-connector ${filled ? 'filled' : ''} w-10 sm:w-20 h-2 bg-slate-200 mx-3 sm:mx-5 rounded-full border-2 border-slate-800/10" style="transition-delay: ${i * 0.15}s">
+          <div class="step-connector-fill rounded-full" style="transition-delay: ${i * 0.2}s"></div>
+        </div>
+      `;
     }
   });
   html += '</div>';
