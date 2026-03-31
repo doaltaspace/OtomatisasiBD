@@ -22,12 +22,12 @@ const Particles = (() => {
   }
 
   function createParticle() {
-    const shapes = ['circle', 'square', 'triangle'];
+    const shapes = ['cross', 'pill', 'heart', 'drop', 'bandage'];
     const colors = ['#bae6fd', '#c4b5fd', '#a7f3d0', '#fde68a', '#fca5a5', '#7dd3fc'];
     return {
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
-      size: 3 + Math.random() * 6,
+      size: 4 + Math.random() * 6,
       speedX: (Math.random() - 0.5) * 0.3,
       speedY: -0.15 - Math.random() * 0.25,
       rotation: Math.random() * Math.PI * 2,
@@ -45,28 +45,55 @@ const Particles = (() => {
     ctx.globalAlpha = p.opacity;
     ctx.fillStyle = p.color;
     ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 0.8;
+    ctx.lineWidth = 0.7;
+    const s = p.size;
 
-    if (p.shape === 'circle') {
+    if (p.shape === 'cross') {
+      // Medical cross
+      const w = s * 0.38;
       ctx.beginPath();
-      ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    } else if (p.shape === 'square') {
-      const s = p.size;
+      ctx.roundRect(-w, -s, w * 2, s * 2, 1.5);
+      ctx.fill(); ctx.stroke();
       ctx.beginPath();
-      ctx.roundRect(-s, -s, s * 2, s * 2, 2);
-      ctx.fill();
+      ctx.roundRect(-s, -w, s * 2, w * 2, 1.5);
+      ctx.fill(); ctx.stroke();
+    } else if (p.shape === 'pill') {
+      // Capsule
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s * 1.3, s * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 0.55);
+      ctx.lineTo(0, s * 0.55);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 0.5;
       ctx.stroke();
-    } else {
-      const s = p.size;
+    } else if (p.shape === 'heart') {
+      // Small heart
+      ctx.beginPath();
+      const hs = s * 0.6;
+      ctx.moveTo(0, hs);
+      ctx.bezierCurveTo(-hs * 1.5, 0, -hs * 1.5, -hs, 0, -hs * 0.4);
+      ctx.bezierCurveTo(hs * 1.5, -hs, hs * 1.5, 0, 0, hs);
+      ctx.fill(); ctx.stroke();
+    } else if (p.shape === 'drop') {
+      // Water/blood drop
       ctx.beginPath();
       ctx.moveTo(0, -s);
-      ctx.lineTo(s, s);
-      ctx.lineTo(-s, s);
-      ctx.closePath();
+      ctx.bezierCurveTo(s * 0.8, -s * 0.2, s * 0.7, s * 0.6, 0, s * 0.8);
+      ctx.bezierCurveTo(-s * 0.7, s * 0.6, -s * 0.8, -s * 0.2, 0, -s);
+      ctx.fill(); ctx.stroke();
+    } else {
+      // Bandage (rounded rectangle with dots)
+      ctx.beginPath();
+      ctx.roundRect(-s * 1.2, -s * 0.45, s * 2.4, s * 0.9, s * 0.3);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#1e293b';
+      ctx.globalAlpha = p.opacity * 0.5;
+      ctx.beginPath();
+      ctx.arc(-s * 0.25, 0, 1, 0, Math.PI * 2);
+      ctx.arc(s * 0.25, 0, 1, 0, Math.PI * 2);
       ctx.fill();
-      ctx.stroke();
     }
     ctx.restore();
   }
@@ -299,13 +326,13 @@ function extractDataFromText(text) {
   }
 
   // 2. NOMOR_NOTA_DINAS: reference number in "Keterangan:" section
-  //    Pattern like B/ND-83/XII/2025 or B /ND- 11 / I / 2026 (with spaces)
-  //    Tolerates spaces around / and - then normalizes
+  //    Captures everything between "Keterangan :" and the comma before "Tgl"
+  //    Handles varied formats: B/ND-147/XII/2025, B/ND-2-8/XII/2025, B/ND-I/I/2026
   const notaDinasMatch = normalized.match(
-    /Keterangan\s*:?\s*([A-Z]\s*\/\s*[A-Z]*\s*-?\s*\d+\s*\/\s*[IVXLCDM]+\s*\/\s*\d{4})/i
+    /Keterangan\s*:\s*(.+?)\s*,\s*Tgl/i
   );
   if (notaDinasMatch) {
-    // Normalize: remove spaces around / and - to produce clean format B/ND-11/I/2026
+    // Normalize: remove extra spaces around / and - to produce clean format
     result.NOMOR_NOTA_DINAS = notaDinasMatch[1]
       .replace(/\s*\/\s*/g, "/")
       .replace(/\s*-\s*/g, "-")
@@ -315,11 +342,12 @@ function extractDataFromText(text) {
 
   // 3. TANGGAL_NOTA_DINAS: date after "Tgl" or "TGL" in Keterangan section
   //    Pattern: "Tgl" / "TGL" followed by a date like "24 Desember 2025"
+  //    Uses broad word capture to tolerate typos (e.g. "Desemebr" instead of "Desember")
   const tglNotaMatch = normalized.match(
-    /Tgl\.?\s*,?\s*(\d{1,2}\s+(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i
+    /Tgl\.?\s*,?\s*(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i
   );
   if (tglNotaMatch) {
-    result.TANGGAL_NOTA_DINAS = tglNotaMatch[1].trim();
+    result.TANGGAL_NOTA_DINAS = normalizeDateMonth(tglNotaMatch[1].trim());
   }
 
   // 4. INFORMASI_BD: value after "Jenis Al Um" label
@@ -342,6 +370,59 @@ function extractDataFromText(text) {
   }
 
   return result;
+}
+
+// Normalize date string: fix typos in month names (e.g. "Desemebr" → "Desember")
+function normalizeDateMonth(dateStr) {
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Extract the month word from the date string (between day number and year)
+  const parts = dateStr.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+  if (!parts) return dateStr;
+
+  const [, day, rawMonth, year] = parts;
+  const lower = rawMonth.toLowerCase();
+
+  // Try exact match first
+  const exact = months.find(m => m.toLowerCase() === lower);
+  if (exact) return convertMonthToIndonesian(`${day} ${exact} ${year}`);
+
+  // Fuzzy match: find closest month by Levenshtein distance
+  let bestMatch = rawMonth;
+  let bestDist = Infinity;
+  for (const m of months) {
+    const d = levenshtein(lower, m.toLowerCase());
+    if (d < bestDist) {
+      bestDist = d;
+      bestMatch = m;
+    }
+  }
+  // Accept fuzzy match if distance is reasonable (max 3 edits)
+  if (bestDist <= 3) {
+    return convertMonthToIndonesian(`${day} ${bestMatch} ${year}`);
+  }
+  return dateStr;
+}
+
+// Simple Levenshtein distance
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
 }
 
 // Convert English month names to Indonesian
@@ -856,11 +937,48 @@ function initButtonEffects() {
   });
 }
 
+// =====================
+// Hidden Photo Easter Egg
+// =====================
+function initLucyModal() {
+  const btn = document.getElementById('lucy-btn');
+  const modal = document.getElementById('lucy-modal');
+  const inner = document.getElementById('lucy-modal-inner');
+  const closeBtn = document.getElementById('lucy-modal-close');
+  const photo = document.getElementById('lucy-photo');
+  const placeholder = document.getElementById('lucy-placeholder');
+  if (!btn || !modal) return;
+
+  // Try loading photo.jpg
+  const img = new Image();
+  img.onload = () => { photo.src = 'photo.jpg'; photo.classList.remove('hidden'); placeholder.classList.add('hidden'); };
+  img.src = 'photo.jpg';
+
+  function openModal() {
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => {
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      inner.style.transform = 'scale(1)';
+    });
+  }
+  function closeModal() {
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    inner.style.transform = 'scale(0.9)';
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
+  }
+
+  btn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   Particles.init();
   Confetti.init();
   renderStepIndicator();
   initDropZone();
   initButtonEffects();
+  initLucyModal();
   lucide.createIcons();
 });

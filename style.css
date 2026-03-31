@@ -468,19 +468,27 @@ table tbody tr:hover {
 }
 
 /* Scrollbar styling */
-.table-scroll-wrapper::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+.table-scroll-wrapper::-webkit-scrollbar,
+#file-list::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar-track {
-  background: #f1f5f9;
+.table-scroll-wrapper::-webkit-scrollbar-track,
+#file-list::-webkit-scrollbar-track {
+  background: transparent;
   border-radius: 999px;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar-thumb {
-  background: #1e293b;
+.table-scroll-wrapper::-webkit-scrollbar-thumb,
+#file-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
   border-radius: 999px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+#file-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .table-scroll-wrapper::-webkit-scrollbar-corner {
