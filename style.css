@@ -1,0 +1,121 @@
+/* ================================
+   Otomatisasi Data BD - Styles
+   ================================ */
+
+body {
+  font-family: sans-serif;
+  min-height: 100vh;
+}
+
+/* Smooth step transitions */
+#step-1-container,
+#step-2-container,
+#step-3-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Drop zone drag-over state */
+#drop-zone.drag-over {
+  background-color: rgb(186 230 253);
+  border-color: #0284c7;
+  transform: scale(1.01);
+}
+
+/* Table scroll wrapper: scroll both X and Y */
+.table-scroll-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 60vh;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* Sticky header when scrolling vertically */
+.table-scroll-wrapper thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Scrollbar styling (both axes) */
+.table-scroll-wrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 999px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Toast notification */
+.toast {
+  animation: toastIn 0.3s ease-out;
+}
+
+.toast.toast-out {
+  animation: toastOut 0.3s ease-in forwards;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Table row hover */
+table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
