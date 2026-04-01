@@ -215,18 +215,46 @@
 
       <!-- Processing status -->
       <div id="processing-status" class="hidden mb-8">
-        <div class="bg-amber-50/80 backdrop-blur-sm border-4 border-slate-800 rounded-2xl p-6 text-center">
-          <!-- Custom SVG spinner -->
-          <svg class="w-12 h-12 mx-auto mb-4 processing-spinner" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="24" cy="24" r="20" stroke="#e2e8f0" stroke-width="4"/>
-            <path d="M24 4a20 20 0 0118 11" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
-          </svg>
-          <p id="processing-text" class="text-lg font-bold text-slate-800">Memproses dokumen...</p>
-          <p id="processing-detail" class="text-sm font-bold text-slate-500 mt-1">0 dari 0 selesai</p>
-          <!-- Progress bar -->
-          <div class="mt-4 w-full h-3 bg-slate-200 rounded-full border-2 border-slate-800 overflow-hidden">
-            <div id="processing-bar" class="h-full bg-amber-400 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+        <div class="proc-container bg-amber-50/80 backdrop-blur-sm border-4 border-slate-800 rounded-2xl p-8 text-center relative overflow-hidden">
+
+          <!-- Floating data particles background -->
+          <div class="proc-particles" aria-hidden="true">
+            <span class="proc-particle" style="--x:12%;--delay:0s;--dur:3s"></span>
+            <span class="proc-particle" style="--x:28%;--delay:0.6s;--dur:2.5s"></span>
+            <span class="proc-particle" style="--x:50%;--delay:1.2s;--dur:3.2s"></span>
+            <span class="proc-particle" style="--x:72%;--delay:0.3s;--dur:2.8s"></span>
+            <span class="proc-particle" style="--x:88%;--delay:0.9s;--dur:3.5s"></span>
           </div>
+
+          <!-- Document stack with scan effect -->
+          <div class="proc-doc-scene mx-auto mb-5">
+            <div class="proc-doc-stack">
+              <div class="proc-doc-page proc-doc-back-2"></div>
+              <div class="proc-doc-page proc-doc-back-1"></div>
+              <div class="proc-doc-page proc-doc-front">
+                <div class="proc-scan-beam"></div>
+                <div class="proc-doc-lines">
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="proc-checkmark"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Large percentage counter -->
+          <div id="processing-percent" class="proc-percent">0%</div>
+
+          <!-- File info -->
+          <p id="processing-text" class="text-base font-bold text-slate-800 mt-1">Memproses dokumen...</p>
+          <p id="processing-detail" class="text-sm font-bold text-slate-500 mt-1">0 dari 0 selesai</p>
+
+          <!-- Progress bar with shimmer -->
+          <div class="mt-4 w-full h-4 bg-slate-200 rounded-full border-2 border-slate-800 overflow-hidden relative">
+            <div id="processing-bar" class="proc-bar-fill h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+          </div>
+
+          <!-- Cycling tip -->
+          <p id="processing-tip" class="text-xs font-medium text-slate-400 mt-3 italic transition-opacity duration-300">Mengekstrak data dari dokumen PDF...</p>
         </div>
       </div>
 
@@ -289,12 +317,21 @@
       </div>
 
       <div class="p-6 bg-white/60 border-t-4 border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <button
-          onclick="resetToUpload()"
-          class="btn-neo px-5 py-2.5 bg-white border-4 border-slate-800 rounded-xl font-bold text-sm text-slate-800 shadow-[3px_3px_0px_0px_#1e293b] transition-all"
-        >
-          <i data-lucide="plus" class="w-4 h-4 mr-1 inline stroke-[3]"></i> Proses Dokumen Baru
-        </button>
+        <div class="flex gap-3 w-full sm:w-auto">
+          <button
+            onclick="resetToUpload()"
+            class="btn-neo px-5 py-2.5 bg-white border-4 border-slate-800 rounded-xl font-bold text-sm text-slate-800 shadow-[3px_3px_0px_0px_#1e293b] transition-all"
+          >
+            <i data-lucide="plus" class="w-4 h-4 mr-1 inline stroke-[3]"></i> Proses Dokumen Baru
+          </button>
+          <button
+            id="btn-check-empty"
+            onclick="showEmptyFieldsModal()"
+            class="btn-neo px-5 py-2.5 bg-amber-300 border-4 border-slate-800 rounded-xl font-bold text-sm text-slate-800 shadow-[3px_3px_0px_0px_#1e293b] transition-all flex items-center"
+          >
+            <i data-lucide="alert-triangle" class="w-4 h-4 mr-1 inline stroke-[3]"></i> Cek Data Kosong
+          </button>
+        </div>
         <p id="summary-text" class="text-sm text-slate-800 font-bold bg-sky-100 px-4 py-2 rounded-xl border-2 border-slate-800">
           0 dokumen berhasil diekstrak
         </p>
@@ -308,6 +345,35 @@
 
   <!-- Toast Container -->
   <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
+
+  <!-- Empty Fields Check Modal -->
+  <div id="empty-fields-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300" style="display:none;">
+    <div class="relative bg-white rounded-3xl border-4 border-slate-800 shadow-[8px_8px_0px_0px_#1e293b] p-6 max-w-2xl w-full mx-4 transform scale-90 transition-transform duration-300 max-h-[85vh] flex flex-col" id="empty-fields-modal-inner">
+      <button id="empty-fields-modal-close" onclick="closeEmptyFieldsModal()" class="absolute -top-3 -right-3 w-8 h-8 bg-rose-400 text-white rounded-full border-2 border-slate-800 shadow-[2px_2px_0px_0px_#1e293b] flex items-center justify-center font-bold text-sm hover:bg-rose-500 transition-colors focus:outline-none z-10">&times;</button>
+
+      <!-- Header -->
+      <div class="flex items-center mb-4 pb-4 border-b-4 border-slate-800">
+        <div class="w-12 h-12 bg-amber-300 border-4 border-slate-800 rounded-2xl flex items-center justify-center mr-4 shadow-[3px_3px_0px_0px_#1e293b]">
+          <i data-lucide="search" class="w-6 h-6 text-slate-800 stroke-[3]"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-slate-800">Laporan Data Kosong</h3>
+          <p id="empty-fields-summary" class="text-sm font-medium text-slate-500">Memeriksa semua dokumen...</p>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div id="empty-fields-content" class="overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent space-y-3">
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-4 pt-4 border-t-4 border-slate-800 flex justify-end">
+        <button onclick="closeEmptyFieldsModal()" class="btn-neo px-6 py-2.5 bg-sky-300 border-4 border-slate-800 rounded-xl font-bold text-sm text-slate-800 shadow-[3px_3px_0px_0px_#1e293b] transition-all">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>

@@ -198,50 +198,105 @@ const SFX = (() => {
     return ctx;
   }
 
-  function play(freq, type, duration, vol = 0.25) {
+  // Rich layered note with harmonics and smooth envelope
+  function note(freq, duration, vol = 0.12, type = "sine", detune = 0) {
     const c = getCtx();
+    const t = c.currentTime;
     const osc = c.createOscillator();
     const gain = c.createGain();
     osc.type = type;
-    osc.frequency.setValueAtTime(freq, c.currentTime);
-    gain.gain.setValueAtTime(vol, c.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + duration);
+    osc.frequency.setValueAtTime(freq, t);
+    if (detune) osc.detune.setValueAtTime(detune, t);
+    // Smooth attack-decay envelope
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
     osc.connect(gain);
     gain.connect(c.destination);
-    osc.start(c.currentTime);
-    osc.stop(c.currentTime + duration);
+    osc.start(t);
+    osc.stop(t + duration);
   }
 
-  function sequence(notes, vol = 0.2) {
+  // Chord — multiple frequencies at once for a richer sound
+  function chord(freqs, duration, vol = 0.08, type = "sine") {
+    freqs.forEach((f, i) => note(f, duration, vol, type, i * 3));
+  }
+
+  // Arpeggio — notes with stagger for elegant cascading effect
+  function arp(freqs, noteDur, stagger, vol = 0.1, type = "sine") {
     const c = getCtx();
-    let t = c.currentTime;
-    notes.forEach(([freq, type, dur]) => {
+    const base = c.currentTime;
+    freqs.forEach((freq, i) => {
+      const t = base + i * stagger;
       const osc = c.createOscillator();
       const gain = c.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(vol, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.detune.setValueAtTime(i * 2, t);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(vol, t + 0.01);
+      gain.gain.setValueAtTime(vol * 0.9, t + noteDur * 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + noteDur);
       osc.connect(gain);
       gain.connect(c.destination);
       osc.start(t);
-      osc.stop(t + dur);
-      t += dur * 0.7;
+      osc.stop(t + noteDur);
     });
   }
 
+  // Soft "pop" with noise burst — modern UI feel
+  function pop(vol = 0.1) {
+    const c = getCtx();
+    const t = c.currentTime;
+    // Pitched pop
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.frequency.setValueAtTime(1200, t);
+    osc.frequency.exponentialRampToValueAtTime(400, t + 0.06);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start(t);
+    osc.stop(t + 0.08);
+  }
+
   return {
-    upload() { sequence([[523, "sine", 0.1], [659, "sine", 0.1], [784, "sine", 0.15]]); },
-    remove() { play(330, "triangle", 0.12, 0.2); },
-    step() { play(600, "sine", 0.08, 0.15); },
-    processStart() { sequence([[440, "sine", 0.08], [550, "sine", 0.08], [660, "sine", 0.12]]); },
-    tick() { play(880, "sine", 0.05, 0.12); },
-    success() { sequence([[523, "sine", 0.1], [659, "sine", 0.1], [784, "sine", 0.12], [1047, "sine", 0.2]]); },
-    error() { sequence([[300, "square", 0.15], [200, "square", 0.25]], 0.15); },
-    warning() { sequence([[400, "triangle", 0.12], [350, "triangle", 0.15]], 0.15); },
-    copy() { sequence([[700, "sine", 0.06], [900, "sine", 0.08]], 0.18); },
-    download() { sequence([[440, "sine", 0.08], [554, "sine", 0.08], [659, "sine", 0.1], [880, "sine", 0.15]]); },
-    info() { play(700, "sine", 0.1, 0.12); },
+    // Upload: bright rising arpeggio (C5 → E5 → G5 → C6) — celebratory
+    upload() { arp([523, 659, 784, 1047], 0.18, 0.06, 0.09); },
+
+    // Remove: quick soft downward pop
+    remove() { pop(0.07); },
+
+    // Step change: gentle two-note chime
+    step() { arp([698, 880], 0.15, 0.05, 0.08); },
+
+    // Process start: anticipation build — rising chord
+    processStart() { chord([440, 554, 659], 0.3, 0.06); arp([659, 880, 1047], 0.2, 0.08, 0.07); },
+
+    // Tick: subtle crisp click — not a boring beep
+    tick() { pop(0.06); },
+
+    // Success: satisfying major chord bloom + sparkle arp
+    success() {
+      chord([523, 659, 784], 0.4, 0.07);
+      setTimeout(() => arp([784, 988, 1175, 1568], 0.25, 0.07, 0.06), 150);
+    },
+
+    // Error: soft low minor chord — not harsh
+    error() { chord([220, 262, 330], 0.35, 0.06, "triangle"); },
+
+    // Warning: gentle two-tone nudge
+    warning() { arp([440, 349], 0.2, 0.1, 0.07, "triangle"); },
+
+    // Copy: crisp double tap
+    copy() { pop(0.08); setTimeout(() => pop(0.06), 80); },
+
+    // Download: cascading descent — feels like "saving"
+    download() { arp([1047, 880, 698, 523], 0.2, 0.06, 0.08); },
+
+    // Info: single clean chime
+    info() { note(880, 0.2, 0.08); },
   };
 })();
 
@@ -315,61 +370,126 @@ function extractDataFromText(text) {
     TANGGAL_PEMBUATAN_BD: "",
   };
 
+  // Diagnostics: reasons when a field is empty
+  const diagnostics = {};
+
   // 1. UNIT_KERJA: value after "Untuk Keperluan" label
-  //    Pattern: "Untuk Keperluan" followed by optional ":" then the value
-  //    Stops before "Distribusi Ke" or next known label
   const unitKerjaMatch = normalized.match(
     /Untuk\s+Keperluan\s*:?\s*(.+?)(?=\s*Distribusi\s+Ke|$)/i
   );
   if (unitKerjaMatch) {
     result.UNIT_KERJA = unitKerjaMatch[1].trim();
+  } else {
+    const hasLabel = /Untuk\s+Keperluan/i.test(normalized);
+    diagnostics.UNIT_KERJA = hasLabel
+      ? 'Label "Untuk Keperluan" ditemukan, tapi teks setelahnya tidak terbaca — kemungkinan format PDF berbeda atau terpotong.'
+      : 'Label "Untuk Keperluan" tidak ditemukan — PDF bukan format Bukti Distribusi standar atau teks gagal diekstrak.';
   }
 
-  // 2. NOMOR_NOTA_DINAS: reference number in "Keterangan:" section
-  //    Captures everything between "Keterangan :" and the comma before "Tgl"
-  //    Handles varied formats: B/ND-147/XII/2025, B/ND-2-8/XII/2025, B/ND-I/I/2026
+  // 2. NOMOR_NOTA_DINAS: B/ND-... pattern ending with year
   const notaDinasMatch = normalized.match(
-    /Keterangan\s*:\s*(.+?)\s*,\s*Tgl/i
+    /B\s*\/\s*ND[\s\-]*[\w\-\/\s]*?\/\s*\d{4}/i
   );
   if (notaDinasMatch) {
-    // Normalize: remove extra spaces around / and - to produce clean format
-    result.NOMOR_NOTA_DINAS = notaDinasMatch[1]
+    result.NOMOR_NOTA_DINAS = notaDinasMatch[0]
       .replace(/\s*\/\s*/g, "/")
       .replace(/\s*-\s*/g, "-")
       .replace(/\s+/g, "")
       .trim();
+  } else {
+    const hasKeterangan = /Keterangan/i.test(normalized);
+    const hasBND = /B\s*\/\s*ND/i.test(normalized);
+    if (!hasKeterangan) {
+      diagnostics.NOMOR_NOTA_DINAS = 'Bagian "Keterangan" tidak ditemukan — PDF bukan format BD standar.';
+    } else if (!hasBND) {
+      diagnostics.NOMOR_NOTA_DINAS = 'Bagian "Keterangan" ada, tapi pola "B/ND-..." tidak ditemukan — format nomor mungkin berbeda.';
+    } else {
+      diagnostics.NOMOR_NOTA_DINAS = 'Pola "B/ND" ditemukan tapi tidak diakhiri tahun (4 digit) — teks terpotong atau format tidak standar.';
+    }
   }
 
-  // 3. TANGGAL_NOTA_DINAS: date after "Tgl" or "TGL" in Keterangan section
-  //    Pattern: "Tgl" / "TGL" followed by a date like "24 Desember 2025"
-  //    Uses broad word capture to tolerate typos (e.g. "Desemebr" instead of "Desember")
+  // 3. TANGGAL_NOTA_DINAS: date after "Tgl" / "Tanggal" in Keterangan section
+  //    Supports: "Tgl DD NamaBulan [TA] YYYY", "Tgl DD-MM-YYYY",
+  //    or fallback: "B/ND.../YYYY, DD NamaBulan YYYY" (no Tgl prefix)
   const tglNotaMatch = normalized.match(
-    /Tgl\.?\s*,?\s*(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i
+    /(?:Tanggal|Tgl)\.?\s*,?\s*(\d{1,2}\s+[A-Za-z]+\s+(?:TA\s+)?\d{4})/i
+  );
+  const tglNotaNumericMatch = !tglNotaMatch && normalized.match(
+    /(?:Tanggal|Tgl)\.?\s*,?\s*(\d{1,2})\s*[-\/]\s*(\d{1,2})\s*[-\/]\s*(\d{4})/i
+  );
+  // Fallback: date after B/ND number + comma (no "Tgl"/"Tanggal" prefix)
+  const tglNotaAfterBND = !tglNotaMatch && !tglNotaNumericMatch && normalized.match(
+    /B\s*\/\s*ND[\s\-]*[\w\-\/\s]*?\/\s*\d{4}\s*,\s*(\d{1,2}\s+[A-Za-z]+\s+(?:TA\s+)?\d{4})/i
+  );
+  // Fallback: any "DD MonthName [TA] YYYY" date inside Keterangan line only
+  // Uses "Mengetahui" as boundary to avoid capturing dates from signature block
+  const tglNotaInKeterangan = !tglNotaMatch && !tglNotaNumericMatch && !tglNotaAfterBND && normalized.match(
+    /Keterangan\s*:(?:(?!Mengetahui).)*?(\d{1,2}\s+(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|January|February|March|April|May|June|July|August|September|October|November|December)\s+(?:TA\s+)?\d{4})/i
   );
   if (tglNotaMatch) {
-    result.TANGGAL_NOTA_DINAS = normalizeDateMonth(tglNotaMatch[1].trim());
+    // Strip "TA " (Tahun Anggaran) if present before the year
+    const cleanedDate = tglNotaMatch[1].replace(/\bTA\s+/i, '').trim();
+    result.TANGGAL_NOTA_DINAS = normalizeDateMonth(cleanedDate);
+  } else if (tglNotaNumericMatch) {
+    const [, day, month, year] = tglNotaNumericMatch;
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const monthIdx = parseInt(month, 10) - 1;
+    if (monthIdx >= 0 && monthIdx < 12) {
+      result.TANGGAL_NOTA_DINAS = `${parseInt(day, 10)} ${monthNames[monthIdx]} ${year}`;
+    } else {
+      result.TANGGAL_NOTA_DINAS = `${day}-${month}-${year}`;
+    }
+  } else if (tglNotaAfterBND) {
+    const cleanedDate = tglNotaAfterBND[1].replace(/\bTA\s+/i, '').trim();
+    result.TANGGAL_NOTA_DINAS = normalizeDateMonth(cleanedDate);
+  } else if (tglNotaInKeterangan) {
+    const cleanedDate = tglNotaInKeterangan[1].replace(/\bTA\s+/i, '').trim();
+    result.TANGGAL_NOTA_DINAS = normalizeDateMonth(cleanedDate);
+  } else {
+    const hasKeterangan = /Keterangan/i.test(normalized);
+    if (!hasKeterangan) {
+      diagnostics.TANGGAL_NOTA_DINAS = 'Bagian "Keterangan" tidak ditemukan — tidak bisa mengambil tanggal nota dinas.';
+    } else {
+      // Check if there's only a B/ND number without any date
+      const hasBNDOnly = /Keterangan\s*:\s*B\s*\/\s*ND/i.test(normalized);
+      if (hasBNDOnly) {
+        diagnostics.TANGGAL_NOTA_DINAS = 'Bagian "Keterangan" hanya berisi nomor nota dinas (B/ND) tanpa tanggal — tanggal nota dinas tidak dicantumkan di dokumen ini.';
+      } else {
+        diagnostics.TANGGAL_NOTA_DINAS = 'Bagian "Keterangan" ada, tapi tidak ada tanggal yang cocok — format mungkin: tanpa "Tgl", tanpa koma, atau tanggal tidak standar.';
+      }
+    }
   }
 
   // 4. INFORMASI_BD: value after "Jenis Al Um" label
-  //    Pattern: "Jenis Al Um" (or "Jenis Alum") followed by optional ":" then value
-  //    Stops before "Untuk Keperluan" or next label
   const infoBDMatch = normalized.match(
     /Jenis\s+Al\s*\.?\s*Um\s*:?\s*(.+?)(?=\s*Untuk\s+Keperluan|$)/i
   );
   if (infoBDMatch) {
     result.INFORMASI_BD = infoBDMatch[1].trim();
+  } else {
+    const hasLabel = /Jenis\s+Al/i.test(normalized);
+    diagnostics.INFORMASI_BD = hasLabel
+      ? 'Label "Jenis Al Um" ditemukan, tapi teks setelahnya tidak terbaca — kemungkinan format berbeda.'
+      : 'Label "Jenis Al Um" tidak ditemukan — PDF bukan format Bukti Distribusi standar.';
   }
 
-  // 5. TANGGAL_PEMBUATAN_BD: date in signature block
-  //    Pattern: "Jakarta, DD Month YYYY" or similar city + date pattern
+  // 5. TANGGAL_PEMBUATAN_BD: date in signature block (city, DD Month YYYY)
   const tglBDMatch = normalized.match(
     /(?:Jakarta|Bandung|Surabaya|Semarang|Medan|Makassar|Yogyakarta|Denpasar|Palembang|Pontianak)\s*,\s*(\d{1,2}\s+(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i
   );
   if (tglBDMatch) {
     result.TANGGAL_PEMBUATAN_BD = convertMonthToIndonesian(tglBDMatch[1].trim());
+  } else {
+    const hasCity = /(?:Jakarta|Bandung|Surabaya|Semarang|Medan|Makassar|Yogyakarta|Denpasar|Palembang|Pontianak)/i.test(normalized);
+    if (!hasCity) {
+      diagnostics.TANGGAL_PEMBUATAN_BD = 'Nama kota (Jakarta, Bandung, dll) tidak ditemukan di blok tanda tangan — kota belum didukung atau format berbeda.';
+    } else {
+      diagnostics.TANGGAL_PEMBUATAN_BD = 'Nama kota ditemukan, tapi tanggal setelahnya tidak cocok pola "DD NamaBulan YYYY" — bulan salah eja atau format berbeda.';
+    }
   }
 
-  return result;
+  return { result, diagnostics };
 }
 
 // Normalize date string: fix typos in month names (e.g. "Desemebr" → "Desember")
@@ -441,13 +561,21 @@ function convertMonthToIndonesian(dateStr) {
 // =====================
 // Toast Notifications
 // =====================
-function showToast(message, type = "info", duration = 4000) {
+function showToast(message, type = "info", duration = 3000) {
   const container = document.getElementById("toast-container");
+
+  // Limit visible toasts to 3 — dismiss oldest if over limit
+  const existing = container.querySelectorAll('.toast:not(.toast-out)');
+  if (existing.length >= 3) {
+    existing[0].classList.add('toast-out');
+    setTimeout(() => existing[0].remove(), 250);
+  }
+
   const colors = {
-    success: "bg-green-300/95 border-slate-800",
-    error:   "bg-rose-300/95 border-slate-800",
-    info:    "bg-sky-200/95 border-slate-800",
-    warning: "bg-amber-300/95 border-slate-800",
+    success: "bg-green-100/95 border-green-400",
+    error:   "bg-rose-100/95 border-rose-400",
+    info:    "bg-sky-100/95 border-sky-400",
+    warning: "bg-amber-100/95 border-amber-400",
   };
   const icons = {
     success: "check-circle",
@@ -457,15 +585,15 @@ function showToast(message, type = "info", duration = 4000) {
   };
 
   const toast = document.createElement("div");
-  toast.className = `toast relative flex items-center gap-3 px-5 py-3 rounded-xl border-4 ${colors[type]} shadow-[4px_4px_0px_0px_#1e293b] font-bold text-sm text-slate-800 max-w-sm overflow-hidden`;
+  toast.className = `toast relative flex items-center gap-2.5 px-4 py-2.5 rounded-lg border-2 ${colors[type]} shadow-sm font-semibold text-sm text-slate-700 max-w-xs overflow-hidden`;
   toast.style.setProperty('--toast-duration', duration + 'ms');
-  toast.innerHTML = `<i data-lucide="${icons[type]}" class="w-5 h-5 shrink-0 stroke-[3]"></i><span>${message}</span><div class="toast-progress"></div>`;
+  toast.innerHTML = `<i data-lucide="${icons[type]}" class="w-4 h-4 shrink-0 stroke-[2.5]"></i><span>${message}</span><div class="toast-progress"></div>`;
   container.appendChild(toast);
   lucide.createIcons({ nodes: [toast] });
 
   setTimeout(() => {
     toast.classList.add("toast-out");
-    setTimeout(() => toast.remove(), 300);
+    setTimeout(() => toast.remove(), 250);
   }, duration);
 }
 
@@ -555,6 +683,8 @@ window.processFiles = processFiles;
 window.downloadExcel = downloadExcel;
 window.copyToClipboard = copyToClipboard;
 window.removeFile = removeFile;
+window.showEmptyFieldsModal = showEmptyFieldsModal;
+window.closeEmptyFieldsModal = closeEmptyFieldsModal;
 
 // =====================
 // File Upload Handling
@@ -656,12 +786,38 @@ async function processFiles() {
   const statusText = document.getElementById("processing-text");
   const statusDetail = document.getElementById("processing-detail");
   const progressBar = document.getElementById("processing-bar");
+  const percentEl = document.getElementById("processing-percent");
+  const tipEl = document.getElementById("processing-tip");
 
   btnProcess.disabled = true;
   btnProcess.classList.add("opacity-50", "cursor-not-allowed");
   statusDiv.classList.remove("hidden");
   if (progressBar) progressBar.style.width = "0%";
+  if (percentEl) percentEl.textContent = "0%";
   SFX.processStart();
+
+  // Cycling tips
+  const tips = [
+    "Mengekstrak data dari dokumen PDF...",
+    "Dokumen sedang dipindai satu per satu",
+    "Mengidentifikasi pola data dalam dokumen",
+    "Memproses teks dan format tanggal",
+    "Mencocokkan data dengan template BD",
+    "Setiap halaman diperiksa dengan teliti",
+    "Data diekstrak langsung di browser Anda",
+    "Tidak ada data yang dikirim ke server",
+  ];
+  let tipIdx = 0;
+  const tipInterval = setInterval(() => {
+    tipIdx = (tipIdx + 1) % tips.length;
+    if (tipEl) {
+      tipEl.style.opacity = '0';
+      setTimeout(() => {
+        tipEl.textContent = tips[tipIdx];
+        tipEl.style.opacity = '1';
+      }, 300);
+    }
+  }, 3500);
 
   extractedResults = [];
   const total = selectedFiles.length;
@@ -670,6 +826,7 @@ async function processFiles() {
   try {
     await loadPdfJs();
   } catch (e) {
+    clearInterval(tipInterval);
     showToast("Gagal memuat library PDF.js. Periksa koneksi internet.", "error", 6000);
     statusDiv.classList.add("hidden");
     btnProcess.disabled = false;
@@ -680,7 +837,11 @@ async function processFiles() {
   for (let i = 0; i < total; i++) {
     statusText.innerText = `Memproses: ${selectedFiles[i].name}`;
     statusDetail.innerText = `${i} dari ${total} selesai`;
-    if (progressBar) progressBar.style.width = `${((i) / total) * 100}%`;
+    const pct = Math.round((i / total) * 100);
+    if (progressBar) progressBar.style.width = `${pct}%`;
+    if (percentEl) {
+      percentEl.textContent = pct + '%';
+    }
 
     try {
       const text = await extractTextFromPdf(selectedFiles[i]);
@@ -693,20 +854,25 @@ async function processFiles() {
         continue;
       }
 
-      const data = extractDataFromText(text);
-      SFX.tick();
+      const { result: data, diagnostics } = extractDataFromText(text);
+      // Only play tick sound every 10 files or on last file to avoid spam
+      if (total <= 5 || i === total - 1 || (i + 1) % Math.max(1, Math.round(total / 10)) === 0) {
+        SFX.tick();
+      }
 
       const hasData = Object.values(data).some((v) => v !== "");
       if (!hasData) {
         extractedResults.push({
           filename: selectedFiles[i].name,
           data: data,
+          diagnostics: diagnostics,
           error: "Tidak ada data BD yang ditemukan. Format PDF mungkin berbeda.",
         });
       } else {
         extractedResults.push({
           filename: selectedFiles[i].name,
           data: data,
+          diagnostics: diagnostics,
         });
       }
     } catch (e) {
@@ -717,7 +883,10 @@ async function processFiles() {
     }
   }
 
+  clearInterval(tipInterval);
+
   if (progressBar) progressBar.style.width = "100%";
+  if (percentEl) percentEl.textContent = "100%";
   statusDetail.innerText = `${total} dari ${total} selesai`;
 
   // Short delay so the user sees 100%
@@ -905,6 +1074,120 @@ function downloadExcel() {
 }
 
 // =====================
+// Empty Fields Check Modal
+// =====================
+function getEmptyFieldsReport() {
+  const keys = Object.keys(COLUMN_LABELS);
+  const report = [];
+
+  extractedResults.forEach((result, idx) => {
+    const emptyFields = [];
+    if (result.error && !result.data) {
+      emptyFields.push(...keys.map(k => ({
+        label: COLUMN_LABELS[k],
+        reason: 'PDF gagal diproses — ' + (result.error || 'error tidak diketahui'),
+      })));
+    } else if (result.data) {
+      keys.forEach(k => {
+        if (!result.data[k] || result.data[k].trim() === "") {
+          emptyFields.push({
+            label: COLUMN_LABELS[k],
+            reason: (result.diagnostics && result.diagnostics[k]) || 'Pola data tidak ditemukan di teks PDF.',
+          });
+        }
+      });
+    }
+    if (emptyFields.length > 0) {
+      report.push({
+        no: idx + 1,
+        filename: result.filename,
+        emptyFields: emptyFields,
+        isError: !!result.error && !result.data,
+      });
+    }
+  });
+
+  return report;
+}
+
+function showEmptyFieldsModal() {
+  const modal = document.getElementById('empty-fields-modal');
+  const inner = document.getElementById('empty-fields-modal-inner');
+  const content = document.getElementById('empty-fields-content');
+  const summary = document.getElementById('empty-fields-summary');
+
+  const report = getEmptyFieldsReport();
+  const totalEmpty = report.length;
+  const totalFields = report.reduce((sum, r) => sum + r.emptyFields.length, 0);
+
+  if (totalEmpty === 0) {
+    summary.textContent = 'Semua dokumen lengkap — tidak ada data kosong!';
+    content.innerHTML = `
+      <div class="text-center py-10">
+        <div class="w-16 h-16 bg-green-200 border-4 border-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[3px_3px_0px_0px_#1e293b]">
+          <i data-lucide="check-circle" class="w-8 h-8 text-slate-800 stroke-[2.5]"></i>
+        </div>
+        <p class="text-lg font-bold text-slate-800">Semua Data Lengkap!</p>
+        <p class="text-sm text-slate-500 font-medium mt-1">Tidak ditemukan kolom kosong pada semua dokumen.</p>
+      </div>
+    `;
+    SFX.success();
+  } else {
+    summary.textContent = `${totalEmpty} dokumen bermasalah — total ${totalFields} kolom kosong`;
+    SFX.warning();
+
+    let html = '';
+    report.forEach(item => {
+      const fieldRows = item.emptyFields.map(f =>
+        `<div class="flex items-start gap-2 mb-2 last:mb-0">
+          <span class="inline-block bg-rose-200 text-slate-800 text-xs font-bold px-2.5 py-1 rounded-lg border-2 border-slate-800 shrink-0 mt-0.5">${f.label}</span>
+          <span class="text-xs text-slate-600 font-medium leading-relaxed pt-0.5">${f.reason}</span>
+        </div>`
+      ).join('');
+
+      html += `
+        <div class="bg-white border-4 border-slate-800 rounded-2xl p-4 shadow-[3px_3px_0px_0px_#1e293b] empty-field-card">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center">
+              <div class="w-8 h-8 ${item.isError ? 'bg-rose-300' : 'bg-amber-200'} border-2 border-slate-800 rounded-lg flex items-center justify-center mr-3 shrink-0">
+                <span class="text-xs font-bold text-slate-800">${item.no}</span>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-slate-800">${item.filename}</p>
+                <p class="text-xs font-medium text-slate-500 mt-0.5">${item.isError ? 'Gagal diproses' : item.emptyFields.length + ' kolom kosong'}</p>
+              </div>
+            </div>
+            <span class="shrink-0 ${item.isError ? 'bg-rose-300' : 'bg-amber-300'} text-slate-800 text-xs font-bold px-2 py-1 rounded-lg border-2 border-slate-800">
+              ${item.isError ? 'Error' : 'Incomplete'}
+            </span>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-3 border-2 border-slate-200">
+            ${fieldRows}
+          </div>
+        </div>
+      `;
+    });
+    content.innerHTML = html;
+  }
+
+  // Open modal
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => {
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    inner.style.transform = 'scale(1)';
+  });
+  lucide.createIcons();
+}
+
+function closeEmptyFieldsModal() {
+  const modal = document.getElementById('empty-fields-modal');
+  const inner = document.getElementById('empty-fields-modal-inner');
+  modal.classList.add('opacity-0', 'pointer-events-none');
+  inner.style.transform = 'scale(0.9)';
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
+
+// =====================
 // Init
 // =====================
 // =====================
@@ -970,7 +1253,13 @@ function initLucyModal() {
   btn.addEventListener('click', openModal);
   closeBtn.addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); closeEmptyFieldsModal(); } });
+
+  // Empty fields modal: click-outside and Escape
+  const emptyModal = document.getElementById('empty-fields-modal');
+  if (emptyModal) {
+    emptyModal.addEventListener('click', (e) => { if (e.target === emptyModal) closeEmptyFieldsModal(); });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

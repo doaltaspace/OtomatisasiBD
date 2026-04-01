@@ -239,6 +239,24 @@ body {
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* ================================
+   Empty Fields Card Animation
+   ================================ */
+.empty-field-card {
+  animation: emptyCardIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.empty-field-card:hover {
+  transform: translateX(4px);
+  box-shadow: 4px 4px 0px 0px #1e293b;
+}
+
+@keyframes emptyCardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* File remove button */
 .file-remove-btn {
   transition: all 0.2s;
@@ -275,6 +293,245 @@ body {
 
 @keyframes spinSmooth {
   to { transform: rotate(360deg); }
+}
+
+/* ================================
+   Processing Scene — Document Animation
+   ================================ */
+.proc-container {
+  position: relative;
+}
+
+/* Floating data particles */
+.proc-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.proc-particle {
+  position: absolute;
+  bottom: -8px;
+  left: var(--x, 50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fbbf24;
+  opacity: 0;
+  animation: procParticleFloat var(--dur, 3s) ease-out var(--delay, 0s) infinite;
+}
+
+.proc-particle:nth-child(2n) {
+  background: #38bdf8;
+  width: 4px;
+  height: 4px;
+}
+
+.proc-particle:nth-child(3n) {
+  background: #a78bfa;
+  width: 5px;
+  height: 5px;
+}
+
+@keyframes procParticleFloat {
+  0%   { transform: translateY(0) scale(0); opacity: 0; }
+  10%  { transform: translateY(-10px) scale(1); opacity: 0.8; }
+  80%  { opacity: 0.3; }
+  100% { transform: translateY(-160px) scale(0.5); opacity: 0; }
+}
+
+/* Document stack */
+.proc-doc-scene {
+  width: 110px;
+  height: 130px;
+  position: relative;
+}
+
+.proc-doc-stack {
+  position: relative;
+  width: 80px;
+  height: 100px;
+  margin: 10px auto 0;
+}
+
+.proc-doc-page {
+  position: absolute;
+  width: 80px;
+  height: 100px;
+  background: white;
+  border: 3px solid #1e293b;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 #1e293b;
+}
+
+.proc-doc-back-2 {
+  transform: translate(8px, -8px) rotate(4deg);
+  opacity: 0.35;
+  animation: procDocSway2 5s ease-in-out infinite;
+}
+
+.proc-doc-back-1 {
+  transform: translate(4px, -4px) rotate(2deg);
+  opacity: 0.55;
+  animation: procDocSway1 5s ease-in-out 0.4s infinite;
+}
+
+.proc-doc-front {
+  position: relative;
+  overflow: hidden;
+  z-index: 2;
+  animation: procDocBreathe 3s ease-in-out infinite;
+}
+
+@keyframes procDocSway2 {
+  0%, 100% { transform: translate(8px, -8px) rotate(4deg); }
+  30%  { transform: translate(5px, -10px) rotate(2deg); }
+  70%  { transform: translate(10px, -6px) rotate(5deg); }
+}
+
+@keyframes procDocSway1 {
+  0%, 100% { transform: translate(4px, -4px) rotate(2deg); }
+  40%  { transform: translate(2px, -6px) rotate(0.5deg); }
+  60%  { transform: translate(6px, -3px) rotate(3deg); }
+}
+
+@keyframes procDocBreathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.03) translateY(-5px); }
+}
+
+/* Scan beam sweeping across the document */
+.proc-scan-beam {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #0ea5e9 20%, #38bdf8 50%, #0ea5e9 80%, transparent 100%);
+  border-radius: 2px;
+  animation: procScanLine 2.2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(14,165,233,0.6), 0 0 20px rgba(14,165,233,0.2);
+  z-index: 3;
+}
+
+@keyframes procScanLine {
+  0%   { top: 8px; opacity: 0.2; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { top: calc(100% - 12px); opacity: 0.2; }
+}
+
+/* Text lines inside document */
+.proc-doc-lines {
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  position: relative;
+  z-index: 1;
+}
+
+.proc-doc-lines span {
+  display: block;
+  height: 3px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  animation: procLineGlow 2.2s ease-in-out infinite;
+}
+
+.proc-doc-lines span:nth-child(1) { width: 65%; animation-delay: 0s; }
+.proc-doc-lines span:nth-child(2) { width: 90%; animation-delay: 0.12s; }
+.proc-doc-lines span:nth-child(3) { width: 55%; animation-delay: 0.24s; }
+.proc-doc-lines span:nth-child(4) { width: 80%; animation-delay: 0.36s; }
+.proc-doc-lines span:nth-child(5) { width: 45%; animation-delay: 0.48s; }
+
+@keyframes procLineGlow {
+  0%, 100% { background: #e2e8f0; }
+  40%  { background: #93c5fd; }
+  60%  { background: #60a5fa; }
+}
+
+/* Checkmark that appears on scanned lines */
+.proc-checkmark {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #1e293b;
+  opacity: 0;
+  animation: procCheckPop 2.2s ease-in-out infinite;
+}
+
+.proc-checkmark::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 2px;
+  width: 4px;
+  height: 6px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+@keyframes procCheckPop {
+  0%, 60% { opacity: 0; transform: scale(0); }
+  75%  { opacity: 1; transform: scale(1.2); }
+  85%, 95% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+
+/* Large percentage display */
+.proc-percent {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #1e293b;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  transition: transform 0.15s ease;
+}
+
+.proc-percent.bump {
+  animation: procPercentBump 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes procPercentBump {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Progress bar with animated shimmer gradient */
+.proc-bar-fill {
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 30%, #fbbf24 50%, #f59e0b 70%, #fbbf24 100%);
+  background-size: 200% 100%;
+  animation: procBarShimmer 1.5s linear infinite;
+  position: relative;
+}
+
+.proc-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: procBarGlint 2s ease-in-out infinite;
+}
+
+@keyframes procBarShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes procBarGlint {
+  0%   { left: -40%; }
+  100% { left: 140%; }
 }
 
 /* ================================
@@ -499,18 +756,18 @@ table tbody tr:hover {
    Toast System
    ================================ */
 .toast {
-  animation: toastIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  backdrop-filter: blur(4px);
+  animation: toastIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  backdrop-filter: blur(8px);
 }
 
 .toast.toast-out {
-  animation: toastOut 0.3s ease-in forwards;
+  animation: toastOut 0.25s ease-in forwards;
 }
 
 @keyframes toastIn {
   from {
     opacity: 0;
-    transform: translateX(40px) scale(0.95);
+    transform: translateX(30px) scale(0.96);
   }
   to {
     opacity: 1;
@@ -525,7 +782,7 @@ table tbody tr:hover {
   }
   to {
     opacity: 0;
-    transform: translateX(40px) scale(0.9);
+    transform: translateX(30px) scale(0.95);
   }
 }
 
