@@ -4,7 +4,10 @@
 // =====================
 const Particles = (() => {
   let canvas, ctx, particles = [], raf;
+  let lastTime = 0;
   const COUNT = 35;
+  const TARGET_FPS = 60;
+  const TARGET_FRAME_MS = 1000 / TARGET_FPS;
 
   function init() {
     canvas = document.getElementById('particles-canvas');
@@ -13,7 +16,8 @@ const Particles = (() => {
     resize();
     window.addEventListener('resize', resize);
     for (let i = 0; i < COUNT; i++) particles.push(createParticle());
-    loop();
+    lastTime = performance.now();
+    loop(lastTime);
   }
 
   function resize() {
@@ -98,12 +102,18 @@ const Particles = (() => {
     ctx.restore();
   }
 
-  function loop() {
+  function loop(now) {
+    const elapsed = now - lastTime;
+    lastTime = now;
+    // delta multiplier: 1.0 at 60fps, 0.5 at 120fps, 2.0 at 30fps, etc.
+    // Clamped to avoid jumps when tab regains focus after being hidden
+    const dt = Math.min(elapsed / TARGET_FRAME_MS, 3);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => {
-      p.x += p.speedX;
-      p.y += p.speedY;
-      p.rotation += p.rotSpeed;
+      p.x += p.speedX * dt;
+      p.y += p.speedY * dt;
+      p.rotation += p.rotSpeed * dt;
       if (p.y < -20) { p.y = canvas.height + 20; p.x = Math.random() * canvas.width; }
       if (p.x < -20) p.x = canvas.width + 20;
       if (p.x > canvas.width + 20) p.x = -20;
@@ -120,6 +130,9 @@ const Particles = (() => {
 // =====================
 const Confetti = (() => {
   let canvas, ctx, pieces = [], raf, running = false;
+  let lastTime = 0;
+  const TARGET_FPS = 60;
+  const TARGET_FRAME_MS = 1000 / TARGET_FPS;
 
   function init() {
     canvas = document.getElementById('confetti-canvas');
@@ -156,19 +169,25 @@ const Confetti = (() => {
         shape: Math.random() > 0.5 ? 'rect' : 'circle',
       });
     }
-    if (!running) { running = true; loop(); }
+    if (!running) { running = true; lastTime = performance.now(); loop(lastTime); }
   }
 
-  function loop() {
+  function loop(now) {
+    const elapsed = now - lastTime;
+    lastTime = now;
+    // delta multiplier: 1.0 at 60fps, 0.5 at 120fps, etc.
+    // Clamped to avoid jumps when tab regains focus
+    const dt = Math.min(elapsed / TARGET_FRAME_MS, 3);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     pieces = pieces.filter(p => p.life > 0);
     if (pieces.length === 0) { running = false; return; }
     pieces.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.18; // gravity
-      p.rotation += p.rotSpeed;
-      p.life -= p.decay;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 0.18 * dt; // gravity
+      p.rotation += p.rotSpeed * dt;
+      p.life -= p.decay * dt;
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rotation);
